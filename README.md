@@ -15,4 +15,6 @@ Any system calls that require more than 11 arguments will require additional cod
 I've left the printf statements in incase you would like to see how things are changed by the VEH.
 
 
+This proof of concept successfully launches the calculator under the supervision of Sophos EDR. Haven't tested against any other EDR (besides defender).
+
 WHy did i name it syscall Tempering? When it's supposed to be tampering? Well when i was playing diablo 4 I would randomly brick items due to the tempering system. When I started thinking of the idea of randomly selecting benign syscalls I couldn't get this feature out of my head and it's very similar to tampering so I figured it fit.
