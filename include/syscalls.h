@@ -24,7 +24,7 @@ typedef struct _SYS_ENTRY_LIST {
 typedef struct _BENIGN_SYSCALL_ENTRY {
     UINT32 u32Hash;
     ULONG_PTR uAddress;
-    USHORT SSN;
+    DWORD SSN;
 }BENIGN_SYSCALL_ENTRY, *pBENIGN_SYSCALL_ENTRY;
 
 typedef struct _BENIGN_ENTRY_LIST {
@@ -100,6 +100,7 @@ typedef NTSTATUS(NTAPI* t_NtDummyApi)(
 
 
 BOOL init();
+BOOL IsPresent(DWORD64 dw64Hash, pBENIGN_ENTRY_LIST pList);
 
 extern pTAMPERED_SYSCALL g_TamperedSyscall;
 extern PCRITICAL_SECTION g_CriticalSection;

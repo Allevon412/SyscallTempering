@@ -27,6 +27,14 @@ volatile unsigned short g_SYSCALL_OPCODE = 0x405D; // 0x050F ^ 0x2325
 #define SEARCH_BYTES 0x00b8
 #endif
 
+BOOL IsPresent(DWORD64 dw64Hash, pBENIGN_ENTRY_LIST pList) {
+    for(int i = 0; i < pList->u32Count; i++) {
+        if(pList->Entries[i].u32Hash == dw64Hash)
+            return TRUE;
+    }
+    return FALSE;
+}
+
 BOOL init() {
     g_TamperedSyscall = (pTAMPERED_SYSCALL)LocalAlloc(LPTR, sizeof(TAMPERED_SYSCALL));
     g_CriticalSection = (PCRITICAL_SECTION)LocalAlloc(LPTR, sizeof(CRITICAL_SECTION));
@@ -37,6 +45,7 @@ BOOL init() {
         return FALSE;
     if(!PopulateBenignSyscallList())
         return FALSE;
+    
     return TRUE;
 }
 
@@ -120,14 +129,14 @@ BOOL PopulateBenignSyscallList() {
         if(*(unsigned short*)pFunctionName == 'wZ') {
 
             ULONG_PTR uAddress = (ULONG_PTR)((LPBYTE)hNtdll + pdwFunctionAddressArray[pwFunctionOrdinalArray[i]]);
-            WORD wBytes = *(unsigned short*)uAddress;
-            if((wBytes & SEARCH_BYTES) == SEARCH_BYTES) { // we've found a benign syscall.
+            DWORD dwBytes = *(unsigned short*)uAddress;
+            if((dwBytes & SEARCH_BYTES) == SEARCH_BYTES) { // we've found a benign syscall.
                 for(int j = 0; j < 0x20; j++) {
-                    wBytes = *(unsigned short*)(uAddress + j);
-                    if((wBytes & 0x00B8) == 0x00B8) { // we've found our SSN
+                    dwBytes = *(DWORD*)(uAddress + j);
+                    if((dwBytes & 0x000000B8) == 0x000000B8) { // we've found our SSN
                         g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].u32Hash	= HASHA(pFunctionName);
                         g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].uAddress	= uAddress;
-                        g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].SSN = *(unsigned short*)(uAddress + j + 1);
+                        g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].SSN = *(DWORD*)(uAddress + j + 1);
                         g_BenignSyscallList->u32Count++;
                         break;
                     }
@@ -146,7 +155,7 @@ BOOL PopulateBenignSyscallList() {
 
             if (g_BenignSyscallList->Entries[j].SSN > g_BenignSyscallList->Entries[j + 1].SSN) {
 
-                BENIGN_SYSCALL_ENTRY TempEntry = { .u32Hash = g_BenignSyscallList->Entries[j].u32Hash, .uAddress = g_SyscallList->Entries[j].uAddress, .SSN = g_BenignSyscallList->Entries[j].SSN };
+                BENIGN_SYSCALL_ENTRY TempEntry = { .u32Hash = g_BenignSyscallList->Entries[j].u32Hash, .uAddress = g_BenignSyscallList->Entries[j].uAddress, .SSN = g_BenignSyscallList->Entries[j].SSN };
 
                 g_BenignSyscallList->Entries[j].u32Hash = g_BenignSyscallList->Entries[j + 1].u32Hash;
                 g_BenignSyscallList->Entries[j].uAddress = g_BenignSyscallList->Entries[j + 1].uAddress;
