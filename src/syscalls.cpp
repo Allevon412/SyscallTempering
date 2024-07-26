@@ -21,6 +21,12 @@ PVOID g_VehHandler = NULL;
 LONG ExceptionHandlerCallbackRoutine(IN PEXCEPTION_POINTERS pExceptionInfo);
 volatile unsigned short g_SYSCALL_OPCODE = 0x405D; // 0x050F ^ 0x2325
 
+#if defined(_WIN64)
+#define SEARCH_BYTES 0x8b4c
+#else
+#define SEARCH_BYTES 0x00b8
+#endif
+
 BOOL init() {
     g_TamperedSyscall = (pTAMPERED_SYSCALL)LocalAlloc(LPTR, sizeof(TAMPERED_SYSCALL));
     g_CriticalSection = (PCRITICAL_SECTION)LocalAlloc(LPTR, sizeof(CRITICAL_SECTION));
@@ -114,15 +120,16 @@ BOOL PopulateBenignSyscallList() {
         if(*(unsigned short*)pFunctionName == 'wZ') {
 
             ULONG_PTR uAddress = (ULONG_PTR)((LPBYTE)hNtdll + pdwFunctionAddressArray[pwFunctionOrdinalArray[i]]);
-
-            for(int i = 0; i< 0x20; i++) {
-                g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].SSN = *(unsigned short*)(g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].uAddress + i);
-                if((g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].SSN & 0x00B8) == 0x00B8) {
-                    g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].u32Hash	    = HASHA(pFunctionName);
-                    g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].uAddress	= uAddress;
-                    g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].SSN         = *(unsigned short*)(g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].uAddress + i + 1);
-                    g_BenignSyscallList->u32Count++;
-                    break;
+            WORD wBytes = *(unsigned short*)uAddress;
+            if((wBytes & SEARCH_BYTES) == SEARCH_BYTES) { // we've found a benign syscall.
+                for(int i = 0; i< 0x20; i++) {
+                    if((wBytes & 0x00B8) == 0x00B8) { // we've found our SSN
+                        g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].u32Hash	= HASHA(pFunctionName);
+                        g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].uAddress	= uAddress;
+                        g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].SSN = *(unsigned short*)(uAddress + i + 1);
+                        g_BenignSyscallList->u32Count++;
+                        break;
+                    }
                 }
             }
         }
