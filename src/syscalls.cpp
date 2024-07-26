@@ -112,19 +112,19 @@ BOOL PopulateBenignSyscallList() {
     for(int i = 0; i < pExportDirectory->NumberOfNames; i++) {
         LPSTR pFunctionName = (LPSTR)((LPBYTE)hNtdll + pdwFunctionNameArray[i]);
         if(*(unsigned short*)pFunctionName == 'wZ') {
-            g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].u32Hash	= HASHA(pFunctionName);
-            g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].uAddress	= (ULONG_PTR)((LPBYTE)hNtdll + pdwFunctionAddressArray[pwFunctionOrdinalArray[i]]);
 
+            ULONG_PTR uAddress = (ULONG_PTR)((LPBYTE)hNtdll + pdwFunctionAddressArray[pwFunctionOrdinalArray[i]]);
 
             for(int i = 0; i< 0x20; i++) {
                 g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].SSN = *(unsigned short*)(g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].uAddress + i);
                 if((g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].SSN & 0x00B8) == 0x00B8) {
-                    g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].SSN = *(unsigned short*)(g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].uAddress + i + 1);
+                    g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].u32Hash	    = HASHA(pFunctionName);
+                    g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].uAddress	= uAddress;
+                    g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].SSN         = *(unsigned short*)(g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].uAddress + i + 1);
+                    g_BenignSyscallList->u32Count++;
                     break;
                 }
             }
-
-            g_BenignSyscallList->u32Count++;
         }
     }
 
