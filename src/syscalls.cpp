@@ -122,7 +122,8 @@ BOOL PopulateBenignSyscallList() {
             ULONG_PTR uAddress = (ULONG_PTR)((LPBYTE)hNtdll + pdwFunctionAddressArray[pwFunctionOrdinalArray[i]]);
             WORD wBytes = *(unsigned short*)uAddress;
             if((wBytes & SEARCH_BYTES) == SEARCH_BYTES) { // we've found a benign syscall.
-                for(int i = 0; i< 0x20; i++) {
+                for(int i = 0; i < 0x20; i++) {
+                    wBytes = *(unsigned short*)(uAddress + i);
                     if((wBytes & 0x00B8) == 0x00B8) { // we've found our SSN
                         g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].u32Hash	= HASHA(pFunctionName);
                         g_BenignSyscallList->Entries[g_BenignSyscallList->u32Count].uAddress	= uAddress;
